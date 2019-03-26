@@ -1,0 +1,89 @@
+<html>
+	<head>
+		<title>
+			Four player chess bot wrapper
+		</title>
+		<script src="../../../Desktop/Programming/jquery.js" ></script>
+		<style>
+			body {
+				font-family:cambria;
+				font-size:12pt;
+			}
+			table.game_table {
+				
+			}
+			.game_table td {
+				padding:10px;
+				height:45px;
+				width:45px;
+				text-align:center;
+				vertical-align: center;
+				cursor:pointer;
+				background-repeat:no-repeat;
+				background-position:center;
+			}
+			.game_table td:hover {
+				opacity:0.5;
+			}
+
+			.game_table tr:nth-of-type(odd) .cc:nth-of-type(even) ,
+			.game_table tr:nth-of-type(even) .cc:nth-of-type(odd){
+				background-color:gray;
+			}
+			td.King {
+				background-image:url("img/king.png");
+			}
+			td.Queen {
+				background-image:url("img/queen.png");
+			}
+			td.Queen1Pt {
+				background-image:url("img/queen.png");
+			}
+			td.Rook {
+				background-image:url("img/rook.png");
+			}
+			td.Knight {
+				background-image:url("img/knight.png");
+			}
+			td.Pawn {
+				background-image:url("img/pawn.png");
+			}
+			td.Block {
+				background:black !important;
+			}
+			td.Bishop {
+				background-image:url("img/bishop.png");
+			}
+			.game_table .owns0 {
+				background-color:red !important;
+			}
+			.game_table .owns1 {
+				background-color:blue !important;
+			}
+			.game_table .owns2 {
+				background-color:yellow !important;
+			}
+			.game_table .owns3 {
+				background-color:green !important;
+
+			}
+		</style>
+		
+		<script src='bot.js' ></script>
+	</head>
+	<body>
+		<button onclick="go()" >Advance</button>
+		<div id="board-render-wrap" ></div>
+		<script>
+		
+			var board = new ChessBoard(0, test_map, document.getElementById("board-render-wrap"));
+			function go() {
+				var best_move = board.ab_recommended_move(board.next_move);
+				board.apply_move(best_move.from, best_move.to);
+				board.process()
+				board.advance();
+			}
+		</script>
+	</body>
+
+</html>
