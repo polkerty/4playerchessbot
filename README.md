@@ -5,5 +5,5 @@ See paper.docx for more.
 
 This project no doubt needs some work to get running again, but it's pretty nifty. 
 
-You can see a video of it in action here 
+You can see a video of it in action  
 [here](video.html) (the bot is blue).
