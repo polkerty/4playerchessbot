@@ -4,3 +4,6 @@ actually computes the move tree. In addition, it has code for performing paramet
 See paper.docx for more.
 
 This project no doubt needs some work to get running again, but it's pretty nifty. 
+
+You can see a video of it in action here 
+[here](video.html) (the bot is blue).
