@@ -30,28 +30,28 @@
 			.game_table tr:nth-of-type(even) .cc:nth-of-type(odd){
 				background-color:gray;
 			}
-			td.King {
+			td.k {
 				background-image:url("img/king.png");
 			}
-			td.Queen {
+			td.q {
 				background-image:url("img/queen.png");
 			}
-			td.Queen1Pt {
+			td.d {
 				background-image:url("img/queen.png");
 			}
-			td.Rook {
+			td.r {
 				background-image:url("img/rook.png");
 			}
-			td.Knight {
+			td.n {
 				background-image:url("img/knight.png");
 			}
-			td.Pawn {
+			td.p {
 				background-image:url("img/pawn.png");
 			}
-			td.Block {
+			td.c {
 				background:black !important;
 			}
-			td.Bishop {
+			td.b {
 				background-image:url("img/bishop.png");
 			}
 			.game_table .owns0 {
@@ -78,10 +78,26 @@
 		
 			var board = new ChessBoard(0, test_map, document.getElementById("board-render-wrap"));
 			function go() {
-				var best_move = board.ab_recommended_move(board.next_move);
-				board.apply_move(best_move.from, best_move.to);
-				board.process()
-				board.advance();
+					var url = 
+				    $.ajax({
+						url:"http://localhost:3000",
+						type:"POST",
+						data:JSON.stringify(board.toState()),
+						contentType:"application/json",
+						//dataType:"json",
+						success: function(data){
+							console.log(data);
+							var best_move = data;
+							board.apply_move(best_move.from, best_move.to);
+							board.process()
+							board.advance();
+							board.render();
+
+						},
+						failure: function() {
+							alert("Unable to process request. Is the server running at " + url + "?");
+						}
+					});
 			}
 		</script>
 	</body>

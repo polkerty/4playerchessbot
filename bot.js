@@ -251,6 +251,7 @@ function probe ( row, col, delta_row, delta_col, board, is_single_hop, no_swoggl
 
 
 var Block = function( ) {
+	var _ = this;
 	this.owns = -1;
 	this.type =  1;
 	this.text = "c";
@@ -382,7 +383,7 @@ var Queen = function( owns ) {
 
 
 	this.toString = function() {
-		return _text + ":" + _.owns;
+		return _.text + ":" + _.owns;
 	}
 
 
@@ -402,7 +403,7 @@ var Queen = function( owns ) {
 var Queen1Pt = function( owns ) {
 	var _ = this;
 	this.owns = owns;
-	this.type = 7;
+	this.type = 8;
 	this.text = "d";
 	this.alive = true;
 	this.points = 1;
@@ -435,7 +436,7 @@ var Pawn = function( owns ) {
 	this.text = "p";
 
 	this.toString = function() {
-		return _.text + ":" + _.owns;
+		return _.text + ":" + _.owns + ":" + (_.moved?1:0);
 	}
 
 	this.alive = true;
@@ -492,7 +493,7 @@ function isOpen( board, row, col, dir ) {
 }	
 
 function isQueeningMove( piece, from, to ) {
-	if ( !piece.type == 7 ) return false;
+	if ( !(piece.type == 7) ) return false;
 	return (piece.owns == 1 && from.row == 6&& to.row == 7) || 
 	(piece.owns == 3 && from.row == 7 && to.row == 6) ||
 	(piece.owns == 0 && from.col == 6 && to.col == 7 ) ||
@@ -589,27 +590,15 @@ function boardFromMap( map ) {
 				case "q":
 					map[i][j] = new Square ( i, j, new Queen(t[1]));
 					break;
-				case "q1":
+				case "d":
 					map[i][j] = new Square ( i, j, new Queen1Pt(t[1]));
 					break;
 				case "p":
 				
-					var delta_row, delta_col;
-					if ( i < 3 ) {
-						delta_row = 1;
-						delta_col = 0;
-					} else if ( i > 11 ) {
-						delta_row = -1;
-						delta_col = 0;
-					} else if ( j < 3 ) {
-						delta_row = 0;
-						delta_col = 1;
-					} else if ( j > 11 ) {
-						delta_row = 0;
-						delta_col = -1;
-					}
+					var moved = t.length >= 3 && t[2] == "1";
 					
-					map[i][j] = new Square ( i, j, new Pawn(t[1], delta_row, delta_col));
+					map[i][j] = new Square ( i, j, new Pawn(t[1]));
+					map[i][j].contents.moved = moved;
 					break;
 				default:
 					break;
@@ -621,6 +610,7 @@ function boardFromMap( map ) {
 	return map;
 }
 
+var george = 0;
 
 function clone (obj) {
 	var ret = JSON.parse(JSON.stringify(obj));
@@ -653,7 +643,7 @@ var ChessBoard = function( me, map, binding ) {
 	this.alive = [1, 1, 1, 1];
 	
 	this.me = me;
-	this.next_move = 0; //by default
+	this.next_move = me; //by default
 
 	this.options_list = [{}, {}, {}, {}];
 
@@ -684,6 +674,7 @@ var ChessBoard = function( me, map, binding ) {
 	this.toMap = function() {
 		var ret = "";
 		for ( var i = 0; i < _.board.length; ++i ) {
+			if ( i > 0 ) ret += "\n";
 			for ( var j = 0; j < _.board[i].length; ++j ) {
 				if ( j > 0 ) ret += "\t";
 				ret += _.board[i][j].contents.toString();
@@ -700,6 +691,7 @@ var ChessBoard = function( me, map, binding ) {
 			options: _.options_list,
 			next_move: _.next_move
 		};
+		return ret;
 	}
 
 	this.fromState = function(state) {
@@ -712,12 +704,25 @@ var ChessBoard = function( me, map, binding ) {
 
 	this.statefulMove = function(state) {
 		_.fromState(state);
-		return _.ab_recommended_move();
+		return _.ab_recommended_move(_.next_move);
 	}
 
 
 	this.toString = function() {
-		var html = "<table class='game_table'>";
+		var html = "";
+
+		html += "<div class='scores' >Scores: ";
+		var color_names = ["Red", "Blue", "Yellow", "Green"];
+		for ( var i = 0; i < color_names.length; ++i ) {
+			html += color_names[i] + ": " + _.scores[i] + "<span style='display:inline-block; width:30px;' ></span>";
+		}
+		html += "</div>";
+		html += "<div class='cur_turn' >";
+		html += "Cur turn: " + color_names[_.next_move];
+		html += "</div>";
+
+
+		html += "<table class='game_table'>";
 
 		for ( var i = 0 ; i < _.board.length; ++i ) {
 			html += "<tr>";
@@ -734,10 +739,12 @@ var ChessBoard = function( me, map, binding ) {
 		return html;
 	}
 
-
+	
 	this.alpha_beta = function ( plies_remaining, scan_hierarchy, player ) {
 
-		player == player === undefined ? player : _.me;
+		george = george + 1; if ( george % 25 == 0 ) console.log(george + " plies examined", player, scan_hierarchy);
+
+		player == player === undefined ? me : player;
 		
 		var horizon = scan_hierarchy[player];
 		
@@ -770,8 +777,15 @@ var ChessBoard = function( me, map, binding ) {
 
 	}
 
+	_.ab_width = [3, 2, 1, 1];
+	_.ab_depth = 10;
+
 	this.ab_recommended_move = function(player){
-		return _.alpha_beta(5, [3, 2, 1, 1], player).move; 
+		var ab_rotated = new Array(_.ab_width.length);
+		for ( var i = 0; i < _.ab_width.length; ++i ) {
+			ab_rotated[(i + player)%_.ab_width.length] = _.ab_width[i];
+		}
+		return _.alpha_beta(_.ab_depth, ab_rotated, player).move; 
 	}
 
 	
@@ -958,13 +972,13 @@ var ChessBoard = function( me, map, binding ) {
 
 		options = Object.assign({
 			banked_point_multiplier: 0.9,
-			lost_point_muliplier: 1, // lower values are more aggressive
+			lost_point_multiplier: 1, // lower values are more aggressive
 			my_piece_multiplier: 1,
 		 	threat_point_multiplier: 0.3, // a little value for making threats.
 			potential_point_multiplier: 0.3,
 			check_points_right: 2, // we like this
 			check_points: 1
-		}, _.options[player]);
+		}, _.options_list[player]);
 
 	
 		// we want a high score.
@@ -997,7 +1011,7 @@ var ChessBoard = function( me, map, binding ) {
 					if ( aval <= 0  ) {
 						score += _.board[i][j].contents.value * options.my_piece_multiplier;
 					} else {
-						score -= _.board[i][j].contents.value * options.lost_point_muliplier;
+						score -= _.board[i][j].contents.value * options.lost_point_multiplier;
 					}
 				} else {
 					// let's see if we threaten them...
@@ -1017,14 +1031,15 @@ var ChessBoard = function( me, map, binding ) {
 					var aval = _.attack_val(_.board[i][j].contents.value, threatsFromPlayer,
 					defenses);
 
-
+					if ( !_.board[i][j].contents.alive ) aval = 0;
+					
 					if ( aval > 0 ) {
 						score += options.potential_point_multiplier*aval;
 						if ( verbose ) {
 							console.log ("At "  + i + "," + j + " our threat points are: " + options.potential_point_multiplier*aval);
 						}
 					}
-					if ( _.board[i][j].contents.type == 5 && threatsFromPlayer.length) {
+					if ( _.board[i][j].contents.type == 5 && threatsFromPlayer.length && aval > 0) {
 						if ( _.board[i][j].contents.owns + 1 == player )
 						score += options.check_points_right;
 						if ( verbose ) {
@@ -1074,12 +1089,14 @@ var ChessBoard = function( me, map, binding ) {
 		}
 	}
 
-	this.kill = function(p) {
+	this.kill = function(p, keep_king_alive) {
 		_.alive[p] = false;
 		_.applyAll( function( piece, i, j, board) {
-			piece.contents.alive = false;
-		})
-	}
+			if ( piece.contents.owns == p  && (piece.contents.type != 5 || !keep_king_alive ) ) {
+				piece.contents.alive = false;
+			}
+		});
+	};
 
 	
 	this.getAllMoves = function( player ) {
@@ -1110,8 +1127,11 @@ var ChessBoard = function( me, map, binding ) {
 		var candidate = new ChessBoard(player);
 		candidate.board = copyBoard(_.board);
 		candidate.alive = _.alive;
-		candidate.scores = _.scores;
+		candidate.scores = _.scores.slice(0);
 		candidate.next_move = _.next_move;
+		candidate.options_list = _.options_list;
+		candidate.ab_depth = _.ab_depth;
+		candidate.ab_width = _.ab_width;
 		return candidate;
 	}
 
@@ -1198,11 +1218,16 @@ var ChessBoard = function( me, map, binding ) {
 		}
 
 	}
-
-
+	
 	this.render();
 	
 }
 
 
+}
+
+try {
+	exports.Board = ChessBoard;
+} catch (e) {
+	
 }

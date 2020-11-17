@@ -1,0 +1,34 @@
+<html>
+<head>
+<title>Node post test</title>
+
+
+<script src="../../Programming/jquery.js" ></script>
+<script src="bot.js" ></script>
+<script>
+
+    board = new ChessBoard(0);
+    console.log("state", board.toState());
+    358
+
+    $.ajax({
+        url:"http://localhost:3000",
+        type:"POST",
+        data:JSON.stringify(board.toState()),
+        contentType:"application/json",
+        //dataType:"json",
+        success: function(data){
+            console.log(data);
+        },
+        failure: function() {
+            console.log("fail");
+        }
+    })
+</script>
+
+
+</head>
+<body>
+
+</body>
+</html>
